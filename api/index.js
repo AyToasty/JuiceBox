@@ -58,7 +58,7 @@ const tagsRouter = require('./tags');
 apiRouter.use('/tags', tagsRouter);
 
 apiRouter.use((error, req, res, next) => {
-  res.send(error);
+  res.status(error.status || 500).json({ error: error.message || 'Internal Server Error' });
 });
 
 module.exports = apiRouter;

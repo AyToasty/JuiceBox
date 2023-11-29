@@ -47,6 +47,10 @@ postsRouter.post('/', requireUser, async (req, res, next) => {
     postData.title = title;
     postData.content = content;
 
+    if (tags) {
+      postData.tags = tags.split(',').map(tag => tag.trim());
+    }
+
     const post = await createPost(postData);
 
     if (post) {
@@ -97,8 +101,35 @@ postsRouter.patch('/:postId', requireUser, async (req, res, next) => {
   }
 });
 
+postsRouter.get('/:postId', async (req, res, next) => {
+  try {
+    const { postId } = req.params;
+    const post = await getPostById(postId);
+
+    res.json({ post });
+  } catch ({ name, message }) {
+    next({ name, message });
+  }
+});
+
 postsRouter.delete('/:postId', requireUser, async (req, res, next) => {
-  res.send({ message: 'under construction' });
+  try {
+    const { postId } = req.params;
+    const originalPost = await getPostById(postId);
+
+    if (originalPost.author.id === req.user.id) {
+      await deletePost(postId);
+      
+      res.json({ message: 'Post deleted successfully' });
+    } else {
+      next({
+        name: 'UnauthorizedUserError',
+        message: 'You cannot delete a post that is not yours',
+      });
+    }
+  } catch ({ name, message }) {
+    next({ name, message });
+  }
 });
 
 module.exports = postsRouter;
